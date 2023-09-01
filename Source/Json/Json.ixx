@@ -5,7 +5,7 @@ export namespace Sandcore {
 	class Json {
 	public:
 		struct Type {
-			using Array = std::unordered_map<std::size_t, Json>;
+			using Array = std::vector<Json>;
 			using Object = std::unordered_map<std::string, Json>;
 			using Number = double;
 			using String = std::string;

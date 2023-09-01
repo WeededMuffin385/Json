@@ -57,26 +57,29 @@ export namespace Sandcore {
 		}
 
 		void parseArray(Json& value) {
-			std::size_t i = 0;
+			Json::Type::Array array;
 
 			while (token.type != Token::Type::ArrayClose) {
 				token = tokenizer.get();
+				auto& last = array.emplace_back();
 				switch (token.type) {
 					case Token::Type::String:
-						parseString(value[i++]);
+						parseString(last);
 						break;
 					case Token::Type::Number:
-						parseNumber(value[i++]);
+						parseNumber(last);
 						break;
 					case Token::Type::ObjectOpen:
-						parseObject(value[i++]);
+						parseObject(last);
 						break;
 					case Token::Type::ArrayOpen:
-						parseArray(value[i++]);
+						parseArray(last);
 						break;
 				}
 				token = tokenizer.get(); // should be , or ]
 			}
+
+			value = array;
 		}
 
 		void parseString(Json& value) {

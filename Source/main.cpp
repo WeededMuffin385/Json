@@ -18,7 +18,7 @@ void example1() {
 }
 
 int main() {
-	std::string string = R"({"A": "Hello world", "B": 3.14, "C":{"A":3,"B":4}})";
+	std::string string = R"({"A": "Hello world", "B": 3.14, "C":{"A":3,"B":4}, "D":[1,12,123, "AHSHIT"]})";
 
 	Sandcore::Parser parser(string);
 

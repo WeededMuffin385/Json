@@ -12,19 +12,15 @@ export namespace Sandcore {
 		int depth = 0;
 
 		void serializeHelper(Json::Type::Array& array) {
-			auto insert = [this, &array](std::size_t key) {
+			auto insert = [this, &array](Json& value) {
 				if (format) result += std::string(depth, '\t');
-				serializeHelper(array[key]);
+				serializeHelper(value);
 			};
 
 			if (array.empty()) return;
 
-			std::set<std::size_t> indices;
-			for (auto& [key, value] : array) indices.insert(key);
-
-
-			auto last = --indices.end();
-			for (auto i = indices.begin(); i != last; ++i) {
+			auto last = --array.end();
+			for (auto i = array.begin(); i != last; ++i) {
 				insert(*i);
 
 				result += ","; if (format) result += "\n";
