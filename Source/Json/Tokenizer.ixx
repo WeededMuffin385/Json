@@ -16,29 +16,6 @@ export namespace Sandcore {
 			Comma,
 		};
 
-		std::string toString() {
-			switch (type) {
-				case Type::ArrayOpen:
-					return "[ARRAY OPEN]";
-				case Type::ArrayClose:
-					return "[ARRAY CLOSE]";
-				case Type::ObjectOpen:
-					return "[OBJECT OPEN]";
-				case Type::ObjectClose:
-					return "[OBJECT CLOSE]";
-				case Type::String:
-					return std::format("[STRING]\"{}\"", value);
-				case Type::Number:
-					return std::format("[NUMBER]{}", value);
-				case Type::Colon:
-					return "[COLON]";
-				case Type::Comma:
-					return "[COMMA]";
-				default:
-					return "[NONE]";
-			}
-		}
-
 		std::string value;
 		Type type;
 	};
