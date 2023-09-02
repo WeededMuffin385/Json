@@ -5,18 +5,22 @@ import Sandcore.Json;
 import Sandcore.Json.Tokenizer;
 
 export namespace Sandcore {
-	struct Parser {
-		Token token;
-		Tokenizer tokenizer;
-
+	class Parser {
+	public:
+		static Json parse(std::string string) {
+			return Parser(string).parse();
+		}
+	private:
 		Parser(std::string string) : tokenizer(string) {}
 
 		Json parse() {
 			Json result;
 			parse(result);
-
 			return result;
 		}
+
+		Token token;
+		Tokenizer tokenizer;
 
 		void parse(Json& value) {
 			token = tokenizer.get();

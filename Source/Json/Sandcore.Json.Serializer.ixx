@@ -4,8 +4,19 @@ import std;
 import Sandcore.Json;
 
 export namespace Sandcore {
-	class JsonSerializer {
-		JsonSerializer(bool format = false) : format(format) {}
+	class Serializer {
+	public:
+		static std::string serialize(Json& value, bool format = false) {
+			auto serializer = Serializer(format);
+			serializer.serializeHelper(value);
+			return serializer.result;
+		}
+
+		static std::string serialize(Json&& value, bool format = false) {
+			return serialize(value, format);
+		}
+	private:
+		Serializer(bool format = false) : format(format) {}
 
 		std::string result;
 		bool format;
@@ -97,19 +108,6 @@ export namespace Sandcore {
 		void formatClose() {
 			--depth;
 			result += std::string(depth, '\t');
-		}
-
-		std::string serialize(Json& value) {
-			serializeHelper(value);
-			return result;
-		}
-	public:
-		static std::string serialize(Json& value, bool format) {
-			return JsonSerializer(format).serialize(value);
-		}
-
-		static std::string serialize(Json&& value, bool format) {
-			return JsonSerializer(format).serialize(value);
 		}
 	};
 }

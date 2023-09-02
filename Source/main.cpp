@@ -14,19 +14,17 @@ void example1() {
 	data["c"][1] = 23;
 	data["e"] = "Holy C";
 
-	std::cout << Sandcore::JsonSerializer::serialize(data, true);
+	std::cout << Sandcore::Serializer::serialize(data, true);
 }
 
 int main() {
 	std::string string = R"({"A": "Hello world", "B": 3.14, "C":{"A":3,"B":4}, "D":[1,12,123, "AHSHIT"]})";
-
-	Sandcore::Parser parser(string);
-
 	Sandcore::Json b;
 
 	{
-		auto a = parser.parse();
+		auto a = Sandcore::Parser::parse(string);
 		b = a;
 	}
-	std::cout << Sandcore::JsonSerializer::serialize(b, true);
+
+	std::cout << Sandcore::Serializer::serialize(b);
 }

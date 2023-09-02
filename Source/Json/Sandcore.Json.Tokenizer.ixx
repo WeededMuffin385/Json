@@ -20,9 +20,8 @@ export namespace Sandcore {
 		Type type;
 	};
 
-	struct Tokenizer {
-		std::stringstream stream;
-
+	class Tokenizer {
+	public:
 		Tokenizer(std::string string) : stream(string){}
 
 		bool empty() {
@@ -93,10 +92,9 @@ export namespace Sandcore {
 
 			return token;
 		}
-
-
-
 	private:
+		std::stringstream stream;
+
 		bool isSpace(char c) {
 			return (c != ' ') && (c != '\n') && (c != '\t');
 		}

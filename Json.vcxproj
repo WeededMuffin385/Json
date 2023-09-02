@@ -135,10 +135,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Json\Json.ixx" />
-    <ClCompile Include="Source\Json\Serializer.ixx" />
-    <ClCompile Include="Source\Json\Parser.ixx" />
-    <ClCompile Include="Source\Json\Tokenizer.ixx" />
+    <ClCompile Include="Source\Json\Sandcore.Json.ixx" />
+    <ClCompile Include="Source\Json\Sandcore.Json.Parser.ixx" />
+    <ClCompile Include="Source\Json\Sandcore.Json.Serializer.ixx" />
+    <ClCompile Include="Source\Json\Sandcore.Json.Tokenizer.ixx" />
     <ClCompile Include="Source\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

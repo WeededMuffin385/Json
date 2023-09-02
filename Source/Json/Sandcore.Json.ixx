@@ -1,4 +1,5 @@
 export module Sandcore.Json;
+
 import std;
 
 export namespace Sandcore {
@@ -17,9 +18,49 @@ export namespace Sandcore {
 			Number,
 			String,
 		};
+
+		struct Iterator {
+			Iterator(Type::Array::iterator array) : array(array), identification(Identification::Array) {}
+			Iterator(Type::Object::iterator object) : object(object), identification(Identification::Object) {}
+
+			Json& operator*() {
+				switch (identification) {
+					case Identification::Array:
+						return array.operator*();
+					case Identification::Object:
+						return object.operator*().second;
+				}
+			}
+
+			void operator++() {
+				switch (identification) {
+					case Identification::Array:
+						++array;
+						break;
+					case Identification::Object:
+						++object;
+						break;
+				}
+			}
+
+			bool operator!=(const Iterator& right) {
+				switch (identification) {
+					case Identification::Array:
+						return array != right.array;
+					case Identification::Object:
+						return object != right.object;
+				}
+			}
+
+		private:
+			Json::Type::Array::iterator array;
+			Json::Type::Object::iterator object;
+
+			Json::Identification identification;
+		};
 	private:
 		template <typename T>
-		static T* create(T& value) {
+		static T* create(const T& value) {
 			return new T(value);
 		}
 
@@ -46,17 +87,30 @@ export namespace Sandcore {
 				}
 			}
 
+			Value(Value& value) = delete;
 			Value(const Value& value) = delete;
 
-			Value(Type::Array& array) : array(create(array)) {}
-			Value(Type::Object& object) : object(create(object)) {}
-			Value(Type::Number& number) : number(create(number)) {}
-			Value(Type::String& string) : string(create(string)) {}
+			Value(const Type::Array& array) : array(create(array)) {}
+			Value(const Type::Object& object) : object(create(object)) {}
+			Value(const Type::Number& number) : number(create(number)) {}
+			Value(const Type::String& string) : string(create(string)) {}
 
 			Value(Type::Array&& array) : Value(array) {}
 			Value(Type::Object&& object) : Value(object) {}
 			Value(Type::Number&& number) : Value(number) {}
 			Value(Type::String&& string) : Value(string) {}
+
+			template <typename T> T& get() = delete;
+			template <> Type::Array& get() { return *array; }
+			template <> Type::Object& get() { return *object; }
+			template <> Type::Number& get() { return *number; }
+			template <> Type::String& get() { return *string; }
+
+			template <typename T> const T& get() const = delete;
+			template <> const Type::Array& get() const { return *array; }
+			template <> const Type::Object& get() const { return *object; }
+			template <> const Type::Number& get() const { return *number; }
+			template <> const Type::String& get() const { return *string; }
 		};
 	public:
 		Json(Identification identification = Identification::Null) : value(identification), identification(identification) {
@@ -104,17 +158,8 @@ export namespace Sandcore {
 
 		Identification getIdentification() { return identification; }
 
-		template <typename T> T& get() = delete;
-		template <> Type::Array& get<Type::Array>() { return *value.array; }
-		template <> Type::Object& get<Type::Object>() { return *value.object; }
-		template <> Type::Number& get<Type::Number>() { return *value.number; }
-		template <> Type::String& get<Type::String>() { return *value.string; }
-
-		template <typename T> const T& get() const = delete;
-		template <> const Type::Array& get<Type::Array>() const { return *value.array; }
-		template <> const Type::Object& get<Type::Object>() const { return *value.object; }
-		template <> const Type::Number& get<Type::Number>() const { return *value.number; }
-		template <> const Type::String& get<Type::String>() const { return *value.string; }
+		template <typename T> T& get() { return value.get<T>(); }
+		template <typename T> const T& get() const { return value.get<T>(); }
 
 		operator const Type::String() const { return get<Type::String>(); }
 		operator const Type::Number() const { return get<Type::Number>(); }
@@ -139,19 +184,19 @@ export namespace Sandcore {
 		}
 
 		Json& at(Type::String index) {
-			return get<Type::Object>().at(index);
+			return value.object->at(index);
 		}
 
 		Json& at(std::size_t index) {
-			return get<Type::Array>().at(index);
+			return value.array->at(index);
 		}
 
 		const Json& at(Type::String index) const {
-			return get<Type::Object>().at(index);
+			return value.object->at(index);
 		}
 
 		const Json& at(std::size_t index) const {
-			return get<Type::Array>().at(index);
+			return value.array->at(index);
 		}
 
 		static Json Object() {
@@ -162,12 +207,34 @@ export namespace Sandcore {
 			return Json(Identification::Array);
 		}
 
-		auto emplace(std::string key, Json value) {
-			return get<Type::Object>().emplace(key, value);
+		auto& emplace(std::string key, Json value) {
+			return this->value.object->emplace(key, value).first->second;
 		}
 
 		auto& emplace_back(Json value) {
-			return get<Type::Array>().emplace_back(value);
+			return this->value.array->emplace_back(value);
+		}
+
+		bool contains(std::string key) const {
+			return value.object->contains(key);
+		}
+
+		auto begin() const {
+			switch (identification) {
+				case Identification::Array:
+					return Iterator(value.array->begin());
+				case Identification::Object:
+					return Iterator(value.object->begin());
+			}
+		}
+
+		auto end() const {
+			switch (identification) {
+				case Identification::Array:
+					return Iterator(value.array->end());
+				case Identification::Object:
+					return Iterator(value.object->end());
+			}
 		}
 
 	private:
@@ -175,3 +242,7 @@ export namespace Sandcore {
 		Value value;
 	};
 }
+
+/*
+* TODO: придумать что делать с range-based for (object версия не используется в проекте)
+*/
