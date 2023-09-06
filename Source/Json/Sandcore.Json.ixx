@@ -11,6 +11,7 @@ export namespace Sandcore {
 			using Number = double;
 			using String = std::string;
 		};
+
 		enum class Identification {
 			Null,
 			Array,
@@ -113,24 +114,68 @@ export namespace Sandcore {
 			template <> const Type::String& get() const { return *string; }
 		};
 	public:
-		Json(Identification identification = Identification::Null) : value(identification), identification(identification) {
-		}
+		Json(Identification identification = Identification::Null) : value(identification), identification(identification) {}
 
 		Json(const Json& json) : Json(json.identification) {
 			switch (identification) {
 				case Identification::String:
-					value = *json.value.string;
+					*value.string = *json.value.string;
 					break;
 				case Identification::Number:
-					value = *json.value.number;
+					*value.number = *json.value.number;
 					break;
 				case Identification::Object:
-					value = *json.value.object;
+					*value.object = *json.value.object;
 					break;
 				case Identification::Array:
-					value = *json.value.array;
+					*value.array = *json.value.array;
 					break;
 			}
+		}
+
+		Json(Json&& other) : value(Identification::Null), identification(other.identification) {
+			value.object = other.value.object;
+			other.value.object = nullptr;
+		}
+
+		Json& operator=(const Json& other) {
+			if (this != &other) {
+				clean();
+				identification = other.identification;
+
+				switch (identification) {
+					case Identification::String:
+						value = *other.value.string;
+						break;
+					case Identification::Number:
+						value = *other.value.number;
+						break;
+					case Identification::Object:
+						value = *other.value.object;
+						break;
+					case Identification::Array:
+						value = *other.value.array;
+						break;
+				}
+			}
+
+			return *this;
+		}
+
+		Json& operator=(Json&& other) {
+			if (this != &other) {
+				clean();
+				identification = other.identification;
+
+				value.object = other.value.object;
+				other.value.object = nullptr;
+			}
+
+			return *this;
+		}
+
+		~Json() {
+			clean();
 		}
 
 		void clean() {
@@ -148,6 +193,7 @@ export namespace Sandcore {
 					delete value.string;
 					break;
 			}
+			value.object = nullptr;
 		}
 
 		Json(Type::Array value) : value(value), identification(Identification::Array) {};
@@ -242,7 +288,3 @@ export namespace Sandcore {
 		Value value;
 	};
 }
-
-/*
-* TODO: придумать что делать с range-based for (object версия не используется в проекте)
-*/

@@ -26,5 +26,5 @@ int main() {
 		b = a;
 	}
 
-	std::cout << Sandcore::Serializer::serialize(b);
+	std::cout << Sandcore::Serializer::serialize(b, true);
 }
