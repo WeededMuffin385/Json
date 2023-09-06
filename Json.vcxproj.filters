@@ -18,9 +18,6 @@
     <ClCompile Include="Source\main.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Json\Sandcore.Json.ixx">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Json\Sandcore.Json.Serializer.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
@@ -28,6 +25,9 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="Source\Json\Sandcore.Json.Tokenizer.ixx">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Json\Sandcore.Json.Better.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

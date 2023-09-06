@@ -135,7 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Json\Sandcore.Json.ixx" />
+    <ClCompile Include="Source\Json\Sandcore.Json.Better.ixx" />
     <ClCompile Include="Source\Json\Sandcore.Json.Parser.ixx" />
     <ClCompile Include="Source\Json\Sandcore.Json.Serializer.ixx" />
     <ClCompile Include="Source\Json\Sandcore.Json.Tokenizer.ixx" />

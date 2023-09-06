@@ -19,12 +19,11 @@ void example1() {
 
 int main() {
 	std::string string = R"({"A": "Hello world", "B": 3.14, "C":{"A":3,"B":4}, "D":[1,12,123, "AHSHIT"]})";
-	Sandcore::Json b;
+	Sandcore::Json b = Sandcore::Parser::parse(string);
 
 	{
-		auto a = Sandcore::Parser::parse(string);
-		b = a;
+		//auto a = Sandcore::Parser::parse(string);
+		// b = a;
 	}
-
 	std::cout << Sandcore::Serializer::serialize(b, true);
 }
