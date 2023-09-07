@@ -3,6 +3,8 @@ export module Sandcore.Json;
 import std;
 
 export namespace Sandcore {
+	const bool debug = false;
+
 	class Json {
 	public:
 		struct Type {
@@ -19,6 +21,12 @@ export namespace Sandcore {
 			Number,
 			String,
 		};
+
+		template<typename T> struct TypeToIdentification { static inline Identification value = Identification::Null; };
+		template<> struct TypeToIdentification<Type::Array> { static inline Identification value = Identification::Array; };
+		template<> struct TypeToIdentification<Type::Object> { static inline Identification value = Identification::Object; };
+		template<> struct TypeToIdentification<Type::Number> { static inline Identification value = Identification::Number; };
+		template<> struct TypeToIdentification<Type::String> { static inline Identification value = Identification::String; };
 
 		struct Iterator {
 			Iterator(Type::Array::iterator array) : array(array), identification(Identification::Array) {}
@@ -59,123 +67,56 @@ export namespace Sandcore {
 
 			Json::Identification identification;
 		};
-	private:
-		template <typename T>
-		static T* create(const T& value) {
-			return new T(value);
-		}
 
+	private:
 		union Value {
+			void* pointer;
+
 			Type::Array* array;
 			Type::Object* object;
 			Type::Number* number;
 			Type::String* string;
 
-			Value(Identification identification) {
-				switch (identification) {
-					case Identification::Array:
-						array = new Type::Array();
-						break;
-					case Identification::Object:
-						object = new Type::Object();
-						break;
-					case Identification::Number:
-						number = new Type::Number();
-						break;
-					case Identification::String:
-						string = new Type::String();
-						break;
-				}
-			}
+			template<typename T> T& get() = delete;
+			template<typename T> const T& get() const = delete;
 
-			Value(Value& value) = delete;
-			Value(const Value& value) = delete;
+			template<> Type::Array& get<Type::Array>() { return *array; }
+			template<> Type::Object& get<Type::Object>() { return *object; }
+			template<> Type::Number& get<Type::Number>() { return *number; }
+			template<> Type::String& get<Type::String>() { return *string; }
 
-			Value(const Type::Array& array) : array(create(array)) {}
-			Value(const Type::Object& object) : object(create(object)) {}
-			Value(const Type::Number& number) : number(create(number)) {}
-			Value(const Type::String& string) : string(create(string)) {}
-
-			Value(Type::Array&& array) : Value(array) {}
-			Value(Type::Object&& object) : Value(object) {}
-			Value(Type::Number&& number) : Value(number) {}
-			Value(Type::String&& string) : Value(string) {}
-
-			template <typename T> T& get() = delete;
-			template <> Type::Array& get() { return *array; }
-			template <> Type::Object& get() { return *object; }
-			template <> Type::Number& get() { return *number; }
-			template <> Type::String& get() { return *string; }
-
-			template <typename T> const T& get() const = delete;
-			template <> const Type::Array& get() const { return *array; }
-			template <> const Type::Object& get() const { return *object; }
-			template <> const Type::Number& get() const { return *number; }
-			template <> const Type::String& get() const { return *string; }
+			template<> const Type::Array& get<Type::Array>() const { return *array; }
+			template<> const Type::Object& get<Type::Object>() const { return *object; }
+			template<> const Type::Number& get<Type::Number>() const { return *number; }
+			template<> const Type::String& get<Type::String>() const { return *string; }
 		};
-	public:
-		Json(Identification identification = Identification::Null) : value(identification), identification(identification) {}
 
-		Json(const Json& json) : Json(json.identification) {
+		Value value;
+		Identification identification;
+
+		template<typename T> void allocate() = delete;
+		template<> void allocate<Type::Array>() { value.array = new Type::Array(); identification = Identification::Array; }
+		template<> void allocate<Type::Object>() { value.object = new Type::Object(); identification = Identification::Object; }
+		template<> void allocate<Type::Number>() { value.number = new Type::Number(); identification = Identification::Number; }
+		template<> void allocate<Type::String>() { value.string = new Type::String(); identification = Identification::String; }
+
+		void allocate(Identification identification) {
 			switch (identification) {
-				case Identification::String:
-					*value.string = *json.value.string;
-					break;
-				case Identification::Number:
-					*value.number = *json.value.number;
+				case Identification::Array:
+					allocate<Type::Array>();
 					break;
 				case Identification::Object:
-					*value.object = *json.value.object;
+					allocate<Type::Object>();
 					break;
-				case Identification::Array:
-					*value.array = *json.value.array;
+				case Identification::Number:
+					allocate<Type::Number>();
 					break;
+				case Identification::String:
+					allocate<Type::String>();
+					break;
+				default:
+					this->identification = Identification::Null;
 			}
-		}
-
-		Json(Json&& other) : value(Identification::Null), identification(other.identification) {
-			value.object = other.value.object;
-			other.value.object = nullptr;
-		}
-
-		Json& operator=(const Json& other) {
-			if (this != &other) {
-				clean();
-				identification = other.identification;
-
-				switch (identification) {
-					case Identification::String:
-						value = *other.value.string;
-						break;
-					case Identification::Number:
-						value = *other.value.number;
-						break;
-					case Identification::Object:
-						value = *other.value.object;
-						break;
-					case Identification::Array:
-						value = *other.value.array;
-						break;
-				}
-			}
-
-			return *this;
-		}
-
-		Json& operator=(Json&& other) {
-			if (this != &other) {
-				clean();
-				identification = other.identification;
-
-				value.object = other.value.object;
-				other.value.object = nullptr;
-			}
-
-			return *this;
-		}
-
-		~Json() {
-			clean();
 		}
 
 		void clean() {
@@ -193,26 +134,149 @@ export namespace Sandcore {
 					delete value.string;
 					break;
 			}
-			value.object = nullptr;
+			value.pointer = nullptr;
 		}
 
-		Json(Type::Array value) : value(value), identification(Identification::Array) {};
-		Json(Type::Object value) : value(value), identification(Identification::Object) {};
-		Json(Type::Number value) : value(value), identification(Identification::Number) {};
-		Json(Type::String value) : value(value), identification(Identification::String) {};
-		Json(const char* value) : value(value), identification(Identification::String) {};
+		void copy(const Json& other) {
+			switch (identification) {
+				case Identification::Array:
+					*value.array = *other.value.array;
+					break;
+				case Identification::Object:
+					*value.object = *other.value.object;
+					break;
+				case Identification::Number:
+					*value.number = *other.value.number;
+					break;
+				case Identification::String:
+					*value.string = *other.value.string;
+					break;
+			}
+		}
+	public:
+		Json(Identification identification = Identification::Null) { 
+			allocate(identification);
+		}
 
-		Identification getIdentification() { return identification; }
+		~Json() {
+			if constexpr (debug) std::println("Json killed: {}", (std::uint64_t)value.pointer);
+			clean();
+		}
 
-		template <typename T> T& get() { return value.get<T>(); }
-		template <typename T> const T& get() const { return value.get<T>(); }
+		template<typename T> void copyConstructorHelper(const T& other) {
+			identification = TypeToIdentification<T>::value;
+			allocate<T>();
+			value.get<T>() = other;
+		}
+		Json(const Type::Array& other) { copyConstructorHelper(other); }
+		Json(const Type::Object& other) { copyConstructorHelper(other); }
+		Json(const Type::Number& other) { copyConstructorHelper(other); }
+		Json(const Type::String& other) { copyConstructorHelper(other); }
 
+		template<typename T> void moveConstructorHelper(T& other) {
+			identification = TypeToIdentification<T>::value;
+			allocate<T>();
+			value.get<T>() = std::move(other);
+		}
+		Json(Type::Array&& other) { moveConstructorHelper(other); }
+		Json(Type::Object&& other) { moveConstructorHelper(other); }
+		Json(Type::Number&& other) { moveConstructorHelper(other); }
+		Json(Type::String&& other) { moveConstructorHelper(other); }
+	public:
+		Json(const Json& other) : Json(other.identification) {
+			copy(other);
+		}
+		Json(Json&& other) : identification(other.identification) {
+			value.pointer = other.value.pointer;
+			other.value.pointer = nullptr;
+		}
+
+		Json& operator=(const Json& other) {
+			if (this != &other) {
+				clean();
+				identification = other.identification;
+
+				allocate(identification);
+				copy(other);
+			}
+
+			return *this;
+		}
+		Json& operator=(Json&& other) {
+			if (this != &other) {
+				clean();
+				identification = other.identification;
+
+				value.pointer = other.value.pointer;
+				other.value.pointer = nullptr;
+			}
+
+			return *this;
+		}
+	public:
+		template<typename T> Json& copyHelper(const T& other) {
+			if (identification != TypeToIdentification<T>::value) {
+				clean();
+				allocate<T>();
+			}
+
+			value.get<T>() = other;
+			return *this;
+		}
+		Json& operator=(const Type::Array& other) { return copyHelper(other); }
+		Json& operator=(const Type::Object& other) { return copyHelper(other); }
+		Json& operator=(const Type::Number& other) { return copyHelper(other); }
+		Json& operator=(const Type::String& other) { return copyHelper(other); }
+
+		template<typename T> Json& moveHelper(T& other) {
+			if (identification != TypeToIdentification<T>::value) {
+				clean();
+				allocate<T>();
+			}
+
+			value.get<T>() = std::move(other);
+			return *this;
+		}
+		Json& operator=(Type::Array&& other) { return moveHelper(other); }
+		Json& operator=(Type::Object&& other) { return moveHelper(other); }
+		Json& operator=(Type::Number&& other) { return moveHelper(other); }
+		Json& operator=(Type::String&& other) { return moveHelper(other); }
+
+	public:
+		template<typename T> T& get() {
+			if (identification != TypeToIdentification<T>::value) throw std::exception("Wrong type!");
+			return value.get<T>();
+		}
+
+		template<typename T> const T& get() const {
+			if (identification != TypeToIdentification<T>::value) throw std::exception("Wrong type!");
+			return value.get<T>();
+		}
+	public:
+		auto begin() const {
+			switch (identification) {
+				case Identification::Array:
+					return Iterator(value.array->begin());
+				case Identification::Object:
+					return Iterator(value.object->begin());
+			}
+		}
+
+		auto end() const {
+			switch (identification) {
+				case Identification::Array:
+					return Iterator(value.array->end());
+				case Identification::Object:
+					return Iterator(value.object->end());
+			}
+		}
+	public:
 		operator const Type::String() const { return get<Type::String>(); }
 		operator const Type::Number() const { return get<Type::Number>(); }
 
 		Json& operator[](Type::String index) {
 			if (identification == Identification::Null) {
-				value = Type::Object();
+				allocate(Identification::Object);
 				identification = Identification::Object;
 			}
 			if (identification != Identification::Object) throw std::exception("Able to use operator[] only with Object");
@@ -265,26 +329,6 @@ export namespace Sandcore {
 			return value.object->contains(key);
 		}
 
-		auto begin() const {
-			switch (identification) {
-				case Identification::Array:
-					return Iterator(value.array->begin());
-				case Identification::Object:
-					return Iterator(value.object->begin());
-			}
-		}
-
-		auto end() const {
-			switch (identification) {
-				case Identification::Array:
-					return Iterator(value.array->end());
-				case Identification::Object:
-					return Iterator(value.object->end());
-			}
-		}
-
-	private:
-		Identification identification = Identification::Null;
-		Value value;
+		Identification getIdentification() { return identification; }
 	};
 }

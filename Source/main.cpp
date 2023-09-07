@@ -10,20 +10,20 @@ void example1() {
 
 	data["a"] = 0.93;
 	data["b"] = "Hello world";
-	data["c"][0] = "Another wild";
-	data["c"][1] = 23;
+	data["c"]["a"] = "Another wild";
+	data["c"]["b"] = 23;
 	data["e"] = "Holy C";
 
-	std::cout << Sandcore::Serializer::serialize(data, true);
+	std::cout << Sandcore::Serializer::serialize(data, true) << "\n";
+}
+
+void example2() {
+	std::string string = R"({"A": "Hello world", "B": 3.14, "C":{"A":3,"B":4}, "D":[1,12,123, "HERESJHONY"]})";
+	Sandcore::Json a = Sandcore::Parser::parse(string);
+	std::cout << Sandcore::Serializer::serialize(a, true);
 }
 
 int main() {
-	std::string string = R"({"A": "Hello world", "B": 3.14, "C":{"A":3,"B":4}, "D":[1,12,123, "AHSHIT"]})";
-	Sandcore::Json b = Sandcore::Parser::parse(string);
-
-	{
-		//auto a = Sandcore::Parser::parse(string);
-		// b = a;
-	}
-	std::cout << Sandcore::Serializer::serialize(b, true);
+	//example1();
+	example2();
 }

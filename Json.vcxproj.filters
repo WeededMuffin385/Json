@@ -27,7 +27,7 @@
     <ClCompile Include="Source\Json\Sandcore.Json.Tokenizer.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Json\Sandcore.Json.Better.ixx">
+    <ClCompile Include="Source\Json\Sandcore.Json.ixx">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
