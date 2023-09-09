@@ -137,19 +137,23 @@ export namespace Sandcore {
 			value.pointer = nullptr;
 		}
 
+		template<typename T> void copy(const Json& other) {
+			value.get<T>() = other.value.get<T>();
+		}
+
 		void copy(const Json& other) {
 			switch (identification) {
 				case Identification::Array:
-					*value.array = *other.value.array;
+					copy<Type::Array>(other);
 					break;
 				case Identification::Object:
-					*value.object = *other.value.object;
+					copy<Type::Object>(other);
 					break;
 				case Identification::Number:
-					*value.number = *other.value.number;
+					copy<Type::Number>(other);
 					break;
 				case Identification::String:
-					*value.string = *other.value.string;
+					copy<Type::String>(other);
 					break;
 			}
 		}
@@ -164,7 +168,6 @@ export namespace Sandcore {
 		}
 
 		template<typename T> void copyConstructorHelper(const T& other) {
-			identification = TypeToIdentification<T>::value;
 			allocate<T>();
 			value.get<T>() = other;
 		}
@@ -174,7 +177,6 @@ export namespace Sandcore {
 		Json(const Type::String& other) { copyConstructorHelper(other); }
 
 		template<typename T> void moveConstructorHelper(T& other) {
-			identification = TypeToIdentification<T>::value;
 			allocate<T>();
 			value.get<T>() = std::move(other);
 		}
@@ -194,8 +196,6 @@ export namespace Sandcore {
 		Json& operator=(const Json& other) {
 			if (this != &other) {
 				clean();
-				identification = other.identification;
-
 				allocate(identification);
 				copy(other);
 			}
@@ -275,21 +275,19 @@ export namespace Sandcore {
 		operator const Type::Number() const { return get<Type::Number>(); }
 
 		Json& operator[](Type::String index) {
-			if (identification == Identification::Null) {
-				allocate(Identification::Object);
-				identification = Identification::Object;
-			}
-			if (identification != Identification::Object) throw std::exception("Able to use operator[] only with Object");
+			if (identification == Identification::Null) allocate<Type::Object>();
+			if (identification != Identification::Object) throw std::exception("Value is not an Object");
 			return value.object->operator[](index);
 		}
 
 		Json& operator[](std::size_t index) {
-			if (identification != Identification::Array) throw std::exception("Able to use operator[](size_t) only with array");
+			if (identification == Identification::Null) allocate<Type::Array>();
+			if (identification != Identification::Array) throw std::exception("Value is not an Array");
 			return value.array->operator[](index);
 		}
 
 		const Json& operator[](std::size_t index) const {
-			if (identification != Identification::Array) throw std::exception("Able to use operator[](size_t) only with array");
+			if (identification != Identification::Array) throw std::exception("Value is not an Array");
 			return value.array->operator[](index);
 		}
 
