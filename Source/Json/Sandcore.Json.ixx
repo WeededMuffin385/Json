@@ -22,32 +22,36 @@ export namespace Sandcore {
 			String,
 		};
 
-		template<typename T> struct TypeToIdentification { static inline Identification value = Identification::Null; };
-		template<> struct TypeToIdentification<Type::Array> { static inline Identification value = Identification::Array; };
-		template<> struct TypeToIdentification<Type::Object> { static inline Identification value = Identification::Object; };
-		template<> struct TypeToIdentification<Type::Number> { static inline Identification value = Identification::Number; };
-		template<> struct TypeToIdentification<Type::String> { static inline Identification value = Identification::String; };
+		template<typename T> struct TypeToIdentification { static constexpr Identification value = Identification::Null; };
+		template<> struct TypeToIdentification<Type::Array> { static constexpr Identification value = Identification::Array; };
+		template<> struct TypeToIdentification<Type::Object> { static constexpr Identification value = Identification::Object; };
+		template<> struct TypeToIdentification<Type::Number> { static constexpr Identification value = Identification::Number; };
+		template<> struct TypeToIdentification<Type::String> { static constexpr Identification value = Identification::String; };
 
 		struct Iterator {
-			Iterator(Type::Array::iterator array) : array(array), identification(Identification::Array) {}
-			Iterator(Type::Object::iterator object) : object(object), identification(Identification::Object) {}
+			Iterator(Type::Array::iterator iterator) : value(iterator), identification(Identification::Array) {}
+			Iterator(Type::Object::iterator iterator) : value(iterator), identification(Identification::Object) {}
+
+			~Iterator() {
+				clean();
+			}
 
 			Json& operator*() {
 				switch (identification) {
 					case Identification::Array:
-						return array.operator*();
+						return value.get<Type::Array::iterator>().operator*();
 					case Identification::Object:
-						return object.operator*().second;
+						return value.get<Type::Object::iterator>().operator*().second;
 				}
 			}
 
 			void operator++() {
 				switch (identification) {
 					case Identification::Array:
-						++array;
+						++value.get<Type::Array::iterator>();
 						break;
 					case Identification::Object:
-						++object;
+						++value.get<Type::Object::iterator>();
 						break;
 				}
 			}
@@ -55,17 +59,43 @@ export namespace Sandcore {
 			bool operator!=(const Iterator& right) {
 				switch (identification) {
 					case Identification::Array:
-						return array != right.array;
+						return value.get<Type::Array::iterator>() != right.value.get<Type::Array::iterator>();
 					case Identification::Object:
-						return object != right.object;
+						return value.get<Type::Object::iterator>() != right.value.get<Type::Object::iterator>();
 				}
 			}
 
 		private:
-			Json::Type::Array::iterator array;
-			Json::Type::Object::iterator object;
+			void clean() {
+				switch (identification) {
+					case Identification::Array:
+						delete value.array;
+						break;
+					case Identification::Object:
+						delete value.object;
+						break;
+				}
+			}
 
-			Json::Identification identification;
+			union Value {
+				Type::Array::iterator* array;
+				Type::Object::iterator* object;
+
+				Value(Type::Array::iterator iterator) : array(new Type::Array::iterator(iterator)) {}
+				Value(Type::Object::iterator iterator) : object(new Type::Object::iterator(iterator)) {}
+
+				template<typename T> T& get() = delete;
+				template<typename T> const T& get() const = delete;
+
+				template<> Type::Array::iterator& get() { return *array; }
+				template<> Type::Object::iterator& get() { return *object; }
+
+				template<> const Type::Array::iterator& get() const { return *array; }
+				template<> const Type::Object::iterator& get() const { return *object; }
+			};
+
+			Value value;
+			Identification identification;
 		};
 
 	private:
@@ -286,6 +316,11 @@ export namespace Sandcore {
 			return value.array->operator[](index);
 		}
 
+		const Json& operator[](std::string index) const {
+			if (identification != Identification::Object) throw std::exception("Value is not an Object");
+			return value.object->operator[](index);
+		}
+
 		const Json& operator[](std::size_t index) const {
 			if (identification != Identification::Array) throw std::exception("Value is not an Array");
 			return value.array->operator[](index);
@@ -327,6 +362,6 @@ export namespace Sandcore {
 			return value.object->contains(key);
 		}
 
-		Identification getIdentification() { return identification; }
+		Identification getIdentification() const { return identification; }
 	};
 }

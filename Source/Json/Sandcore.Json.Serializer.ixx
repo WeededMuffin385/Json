@@ -19,7 +19,7 @@ export namespace Sandcore {
 		Serializer(bool format = false) : format(format) {}
 
 		std::string result;
-		bool format;
+		bool format = false;
 		int depth = 0;
 
 		void serializeHelper(Json::Type::Array& array) {
